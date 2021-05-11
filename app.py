@@ -1,9 +1,9 @@
 import DB
 from flask import Flask, request, jsonify
 import json
-from firebase_admin import messaging
-import firebase_admin
-from firebase_admin import credentials
+#from firebase_admin import messaging
+#import firebase_admin
+#from firebase_admin import credentials
 from datetime import datetime
 from flask import current_app, g
 from flask.cli import with_appcontext
@@ -11,8 +11,8 @@ import sys
 from datetime import timedelta
 import DBInterface
 import math
-from threadNotifica import ThreadNotifica
-from threadCliente import ThreadCliente
+#from threadNotifica import ThreadNotifica
+#from threadCliente import ThreadCliente
 from DAO.PrenotazioneDAO import PrenotazioneDAO
 from DAO.BigliettoDAO import BigliettoDAO
 from DAO.ClienteDAO import ClienteDAO
@@ -29,10 +29,10 @@ TEMPOFASCIA = 15
 server = Flask(__name__)
 print(sys.version)
 
-if not firebase_admin._apps:
-    cred = credentials.Certificate('./serverKey/serverkey.json')
-    default_app = firebase_admin.initialize_app(cred)
-    DBInterface.open_db()
+#if not firebase_admin._apps:
+#    cred = credentials.Certificate('./serverKey/serverkey.json')
+#    default_app = firebase_admin.initialize_app(cred)
+DBInterface.open_db()
 
 @server.route("/")
 def home():
@@ -84,13 +84,13 @@ def accodati():
 
         DBInterface.createPrenotazione(PrenotazioneDAO(req_data['fascia_oraria'], req_data['numero_persone_da_accodare'], req_data['nome_giostra'], req_data['nickname']))
         tempoEliminazioneDallaCoda = fasciaOrariaFineData-now
-        ThreadCliente(req_data['nickname'],req_data['nome_giostra'], req_data['fascia_oraria'],tempoEliminazioneDallaCoda)
+  #      ThreadCliente(req_data['nickname'],req_data['nome_giostra'], req_data['fascia_oraria'],tempoEliminazioneDallaCoda)
         
         tempoAttesa = fasciaOrariaInizioData-now
         if (tempoAttesa >= timedelta(minutes=LIMITENOTIFICA)):
             print("notifica tra: " + str(tempoAttesa-timedelta(minutes=TEMPONOTIFICA)))
             tempoAttesa=(tempoAttesa-timedelta(minutes=TEMPONOTIFICA)).total_seconds()
-            ThreadNotifica(req_data['token_cliente'], tempoAttesa ,req_data['nome_giostra'], req_data['nickname'], req_data['fascia_oraria'])
+ #           ThreadNotifica(req_data['token_cliente'], tempoAttesa ,req_data['nome_giostra'], req_data['nickname'], req_data['fascia_oraria'])
 
         return jsonify(
             status = 200
