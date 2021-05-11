@@ -20,7 +20,7 @@ from DAO.OspiteDAO import OspiteDAO
 from DAO.GiostraDAO import GiostraDAO
 from urllib import unquote
 from datetime import time
-
+#prova
 ORACHIUSURA = time(hour=21,minute=00)
 LIMITENOTIFICA = 15
 TEMPONOTIFICA = 10
