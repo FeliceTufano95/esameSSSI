@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 def readUtente(nickname):
     with app.app_context():
-        cliente = db.query_db('SELECT * FROM Cliente WHERE Cliente.nickname=?', nickname, one=True)
+        cliente = db.query_db('SELECT * FROM Cliente WHERE Cliente.nickname=?', [nickname], one=True)
         try:
             clienteDAO = ClienteDAO(cliente['nickname'], cliente['email'], cliente['password'], cliente['eta'], cliente['altezza'], None)
             return clienteDAO
@@ -164,7 +164,7 @@ def getOspiti(codiceBiglietto):
 def getBiglietto(nomeCliente, data):
     with app.app_context():
         try:
-            biglietto = db.query_db('SELECT * FROM Cliente JOIN Biglietto ON Cliente.nickname=Biglietto.Clientenickname WHERE Cliente.nickname=\''+nomeCliente+'\' AND Biglietto.data=\''+data+'\'', one=True)
+            biglietto = db.query_db('SELECT * FROM Cliente JOIN Biglietto ON Cliente.nickname=Biglietto.Clientenickname WHERE Cliente.nickname=? AND Biglietto.data=?', [nomeCliente, data], one=True)
             ospitiDAO = getOspiti(biglietto['codice'])
             bigliettoDAO = BigliettoDAO(biglietto['codice'], biglietto['data'], ospitiDAO)
             return bigliettoDAO
