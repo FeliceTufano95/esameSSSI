@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 def readUtente(nickname):
     with app.app_context():
-        cliente = db.query_db('SELECT * FROM Cliente WHERE Cliente.nickname="'+nickname+'"', one=True)
+        cliente = db.query_db('SELECT * FROM Cliente WHERE Cliente.nickname=?', nickname, one=True)
         try:
             clienteDAO = ClienteDAO(cliente['nickname'], cliente['email'], cliente['password'], cliente['eta'], cliente['altezza'], None)
             return clienteDAO
