@@ -73,8 +73,19 @@ def registrati():
 @server.route("/login", methods=['GET'])
 def login():
     try:
-        username = request.args.get("username")
-        password = unquote(request.args.get("password")).decode('utf-8')
+        
+		
+		m_pass = re.search(regex_pass, unquote(request.args.get("password")).decode('utf-8'))
+		m_user = re.search(regex_username, request.args.get("username"))
+		
+		if m_user is None:
+			rise
+		if m_pass is None:
+			rise
+			
+		username = m_user.group(0)
+        password = m_pass.group(0)
+		
     except:
         return 'bad request', 400
 
