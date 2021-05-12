@@ -43,17 +43,14 @@ def home():
 def registrati():
     try:
         req_data = request.get_json()
-        regex = r"^\S+@\S+\.\S+$"
+        regex = r"^[\w.]+@[\w.]+\.\w+$"
         test_str = req_data['email']
 
-        matches = re.finditer(regex, test_str)
-
-        for matchNum, match in enumerate(matches, start=1):
-            print ("Match {matchNum} was found at {start}-{end}: {match}".format(matchNum = matchNum, start = match.start(), end = match.end(), match = match.group()))
-    
-        #for groupNum in range(0, len(match.groups())):
-         #   groupNum = groupNum + 1
-        utenteDAO = ClienteDAO(req_data['nickname'], req_data['email'], req_data['password'], req_data['eta'], req_data['altezza'], None)
+	m = re.search(regex, test_str)
+	if m is None:
+		return 'mail non valida', 400
+#	print(m.group(0))
+        utenteDAO = ClienteDAO(req_data['nickname'], m.group(0), req_data['password'], req_data['eta'], req_data['altezza'], None)
     except:
         return 'bad request', 400
     try:
