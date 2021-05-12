@@ -23,7 +23,8 @@ from DAO.OspiteDAO import OspiteDAO
 from DAO.GiostraDAO import GiostraDAO
 from urllib import unquote
 from datetime import time
-import datetime
+#import datetime
+import time as t
 import re
 
 ORACHIUSURA = time(hour=21,minute=00)
@@ -53,7 +54,7 @@ DBInterface.open_db()
 
 def verificaToken(token, nickname):
     for s in sessions:
-         if s.token == token and s.nickname == nickname: and s.expiration > int(datetime.datetime(2019, 8, 8).strftime('%s')):
+         if s.token == token and s.nickname == nickname and s.expiration > t.time():
             return True
     return False
 
@@ -112,7 +113,7 @@ def login():
     if (password == utente.password):
         session_token = str(uuid.uuid4())
 
-	exp_time = int(datetime.datetime(2019, 8, 8).strftime('%s')) + TOKEN_DURATION
+	exp_time = t.time() + TOKEN_DURATION
         for s in sessions:
 	      	if s.nickname == username: #se esiste un'altra sessione la cancello e ne creo una nuova
         	    	sessions.remove(s)
@@ -226,20 +227,20 @@ def checkout():
 
 @server.route("/getFasciaOraria", methods=['GET'])
 def getFasciaOraria():
-    try:
-        nome_giostra = request.args.get('nome_giostra')
-        numero_clienti = DBInterface.readClientiInCoda(nome_giostra)
-        giostra = DBInterface.getGiostra(nome_giostra)
-        minuti_attesa = math.floor(numero_clienti/(giostra.capienza/giostra.durata))
-        ora_inizio = datetime.now()+timedelta(minutes=minuti_attesa)
-        ora_fine = ora_inizio+timedelta(minutes=TEMPOFASCIA)
-        return jsonify(
-            ora_inizio = ora_inizio.strftime("%H:%M"),
-            ora_fine = ora_fine.strftime("%H:%M")
-        )
+#    try:
+    nome_giostra = request.args.get('nome_giostra')
+    numero_clienti = DBInterface.readClientiInCoda(nome_giostra)
+    giostra = DBInterface.getGiostra(nome_giostra)
+    minuti_attesa = math.floor(numero_clienti/(giostra.capienza/giostra.durata))
+    ora_inizio = datetime.now()+timedelta(minutes=minuti_attesa)
+    ora_fine = ora_inizio+timedelta(minutes=TEMPOFASCIA)
+    return jsonify(
+        ora_inizio = ora_inizio.strftime("%H:%M"),
+        ora_fine = ora_fine.strftime("%H:%M")
+    )
 
-    except:
-        return 'bad request', 400
+ #   except:
+  #      return 'bad request', 400
 
 @server.route("/getPrenotazioni", methods=['GET'])
 def getPrenotazioni():
