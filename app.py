@@ -52,8 +52,11 @@ def registrati():
 
 @server.route("/login", methods=['GET'])
 def login():
-    username = request.args.get("username")
-    password = unquote(request.args.get("password")).decode('utf-8')
+    try:
+        username = request.args.get("username")
+        password = unquote(request.args.get("password")).decode('utf-8')
+    except:
+        return 'bad request', 400
 
     try :
         utente = DBInterface.readUtente(username)
