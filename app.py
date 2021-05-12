@@ -23,6 +23,7 @@ from DAO.OspiteDAO import OspiteDAO
 from DAO.GiostraDAO import GiostraDAO
 from urllib import unquote
 from datetime import time
+import datetime
 import re
 
 ORACHIUSURA = time(hour=21,minute=00)
@@ -110,7 +111,9 @@ def login():
         #crea sessione
     if (password == utente.password):
         session_token = str(uuid.uuid4())
-        exp_time = 0 #time.time() + TOKEN_DURATION
+	datetime_object = datetime.datetime(2019, 8, 8)
+
+	exp_time = int(datetime_object.strftime('%s')) + TOKEN_DURATION
         for s in sessions:
 	      	if s.nickname == username: #se esiste un'altra sessione la cancello e ne creo una nuova
         	    	sessions.remove(s)
