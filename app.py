@@ -31,6 +31,8 @@ TEMPOFASCIA = 15
 regex_email = r"^[\w.]+@[\w.]+\.\w+$"
 regex_pass = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,15}$"
 regex_username = r"^\w{6,20}$"
+regex_fascia_oraria = r"^\d\d:\d\d-\d\d:\d\d$"
+regex_data = r"^\d\d\/\d\d\/\d\d\d\d$"
 
 server = Flask(__name__)
 print(sys.version)
@@ -105,7 +107,18 @@ def login():
 def accodati():
     try:
         req_data = request.get_json()
-        fasciaOrariaInizio = req_data['fascia_oraria'].split('-')
+	m_fascia = re.search(regex_fascia_oraria, req_data['fascia_oraria'])
+	m_user = re.search(regex_username, req_data['nickname'])
+
+	if m_fascia is None:
+		return 'Fascia oraria non valida (es 00:00-00:00)', 400
+	
+	if m_user is None:
+		return 'L\'username deve essere tra i 6 e i 20 caratteri di lunghezza e contenere solo caratteri alfanumerici e underscore', 400
+		
+	fascia = m_fascia.group(0)
+	username = m_user.group(0)
+        fasciaOrariaInizio = fascia.split('-')
         fasciaOrariaInizioData = datetime.strptime(fasciaOrariaInizio[0], "%H:%M")
         fasciaOrariaFineData = datetime.strptime(fasciaOrariaInizio[1], "%H:%M")
         now = datetime.strptime(datetime.now().time().strftime("%H:%M"), "%H:%M")
@@ -113,7 +126,7 @@ def accodati():
         if(fasciaOrariaInizioData.time()>ORACHIUSURA):
             return 'La giostra  piena per oggi', 408
 
-        DBInterface.createPrenotazione(PrenotazioneDAO(req_data['fascia_oraria'], req_data['numero_persone_da_accodare'], req_data['nome_giostra'], req_data['nickname']))
+        DBInterface.createPrenotazione(PrenotazioneDAO(fascia, req_data['numero_persone_da_accodare'], req_data['nome_giostra'], username))
         tempoEliminazioneDallaCoda = fasciaOrariaFineData-now
   #      ThreadCliente(req_data['nickname'],req_data['nome_giostra'], req_data['fascia_oraria'],tempoEliminazioneDallaCoda)
         
@@ -147,8 +160,16 @@ def getGiostre():
 def checkout():
     try:
         req_data = request.get_json()
-        data = req_data['cliente_data']
-        nickname = req_data['cliente_nickname']
+	m_data = re.search(regex_data, req_data['cliente_data'])
+	m_user = re.search(regex_username, req_data['cliente_nickname'])
+
+	if m_data is None:
+		return 'Formato data non valido (DD/MM/YYYY)', 400
+	
+	if m_user is None:
+		return 'L\'username deve essere tra i 6 e i 20 caratteri di lunghezza e contenere solo caratteri alfanumerici e underscore', 400
+        data = m_data.group(0)
+        nickname = m_user.group(0)
 
         if (DBInterface.isBigliettoDup(nickname, data)):
             return 'Biglietto duplicato', 406
