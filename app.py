@@ -40,8 +40,11 @@ def home():
 
 @server.route("/registrati", methods=['POST'])
 def registrati():
-    req_data = request.get_json()
-    utenteDAO = ClienteDAO(req_data['nickname'], req_data['email'], req_data['password'], req_data['eta'], req_data['altezza'], None)
+    try:
+        req_data = request.get_json()
+        utenteDAO = ClienteDAO(req_data['nickname'], req_data['email'], req_data['password'], req_data['eta'], req_data['altezza'], None)
+    except:
+        return 'bad request', 400
     try:
         DBInterface.createUtente(utenteDAO)
         return jsonify (
@@ -74,9 +77,8 @@ def login():
 
 @server.route("/accodati", methods=['POST'])
 def accodati():
-    req_data = request.get_json()
-
     try:
+        req_data = request.get_json()
         fasciaOrariaInizio = req_data['fascia_oraria'].split('-')
         fasciaOrariaInizioData = datetime.strptime(fasciaOrariaInizio[0], "%H:%M")
         fasciaOrariaFineData = datetime.strptime(fasciaOrariaInizio[1], "%H:%M")
@@ -117,60 +119,71 @@ def getGiostre():
 
 @server.route("/checkout", methods=['POST'])
 def checkout():
-    req_data = request.get_json()
-    data = req_data['cliente_data']
-    nickname = req_data['cliente_nickname']
+    try:
+        req_data = request.get_json()
+        data = req_data['cliente_data']
+        nickname = req_data['cliente_nickname']
 
-    if (DBInterface.isBigliettoDup(nickname, data)):
-        return 'Biglietto duplicato', 406
+        if (DBInterface.isBigliettoDup(nickname, data)):
+            return 'Biglietto duplicato', 406
 
 
-    lista_ospiti = []
-    ospitiJSON = []
-    for ospite in req_data['cliente_ospiti']:
-        lista_ospiti.append(OspiteDAO(ospite['nome'], ospite['eta'], ospite['altezza']))
-        data_set = {"nome": ospite['nome'], "eta": ospite['eta'], "altezza": ospite['altezza']}
-        jsondump = json.dumps(data_set)
-        ospiteJSON = json.loads(jsondump)
-        ospitiJSON.append(ospiteJSON)
+        lista_ospiti = []   
+        ospitiJSON = []
+        for ospite in req_data['cliente_ospiti']:
+            lista_ospiti.append(OspiteDAO(ospite['nome'], ospite['eta'], ospite['altezza']))
+            data_set = {"nome": ospite['nome'], "eta": ospite['eta'], "altezza": ospite['altezza']}
+            jsondump = json.dumps(data_set)
+            ospiteJSON = json.loads(jsondump)
+            ospitiJSON.append(ospiteJSON)
 
-    biglietto = DBInterface.createBiglietto(data, lista_ospiti, nickname)
+        biglietto = DBInterface.createBiglietto(data, lista_ospiti, nickname)
 
-    return jsonify(
-        codice = biglietto.codice,
-        data = biglietto.data,
-        ospiti = ospitiJSON
+        return jsonify(
+            codice = biglietto.codice,
+            data = biglietto.data,
+            ospiti = ospitiJSON
         )
+        
+    except:
+        return 'bad request', 400
 
 @server.route("/getFasciaOraria", methods=['GET'])
 def getFasciaOraria():
-    nome_giostra = request.args.get('nome_giostra')
-    numero_clienti = DBInterface.readClientiInCoda(nome_giostra)
-    giostra = DBInterface.getGiostra(nome_giostra)
-    minuti_attesa = math.floor(numero_clienti/(giostra.capienza/giostra.durata))
-    ora_inizio = datetime.now()+timedelta(minutes=minuti_attesa)
-    ora_fine = ora_inizio+timedelta(minutes=TEMPOFASCIA)
-    return jsonify(
-        ora_inizio = ora_inizio.strftime("%H:%M"),
-        ora_fine = ora_fine.strftime("%H:%M")
-    )
+    try:
+        nome_giostra = request.args.get('nome_giostra')
+        numero_clienti = DBInterface.readClientiInCoda(nome_giostra)
+        giostra = DBInterface.getGiostra(nome_giostra)
+        minuti_attesa = math.floor(numero_clienti/(giostra.capienza/giostra.durata))
+        ora_inizio = datetime.now()+timedelta(minutes=minuti_attesa)
+        ora_fine = ora_inizio+timedelta(minutes=TEMPOFASCIA)
+        return jsonify(
+            ora_inizio = ora_inizio.strftime("%H:%M"),
+            ora_fine = ora_fine.strftime("%H:%M")
+        )
+        
+    except:
+        return 'bad request', 400
 
 @server.route("/getPrenotazioni", methods=['GET'])
 def getPrenotazioni():
-    nome_cliente = request.args.get('nome_cliente')
-    giostre = DBInterface.getPrenotazioni(nome_cliente)
-    lista_giostreJSON = []
-    lista_clienti_coda = []
-    for giostra in giostre:
-        data_set = {"nome": giostra.nome_giostra, "fascia_oraria": giostra.fascia_oraria, "numero_ospiti": giostra.numero_ospiti}
-        lista_clienti_coda.append(PrenotazioneDAO(giostra.fascia_oraria, giostra.numero_ospiti, giostra.nome_giostra, nome_cliente))
-        jsondump = json.dumps(data_set)
-        giostraJSON = json.loads(jsondump)
-        lista_giostreJSON.append(giostraJSON)
+    try:
+        nome_cliente = request.args.get('nome_cliente')
+        giostre = DBInterface.getPrenotazioni(nome_cliente)
+        lista_giostreJSON = []
+        lista_clienti_coda = []
+        for giostra in giostre:
+            data_set = {"nome": giostra.nome_giostra, "fascia_oraria": giostra.fascia_oraria, "numero_ospiti": giostra.numero_ospiti}
+            lista_clienti_coda.append(PrenotazioneDAO(giostra.fascia_oraria, giostra.numero_ospiti, giostra.nome_giostra, nome_cliente))
+            jsondump = json.dumps(data_set)
+            giostraJSON = json.loads(jsondump)
+            lista_giostreJSON.append(giostraJSON)
 
-    return jsonify (
-        prenotazioni = lista_giostreJSON
-    )
+        return jsonify (
+            prenotazioni = lista_giostreJSON
+        )
+    except:
+        return 'bad request', 400
 
 @server.route("/getBiglietto", methods=['GET'])
 def getBiglietto():
@@ -196,20 +209,23 @@ def getBiglietto():
 
 @server.route("/registraAccesso", methods=['POST'])
 def registraAccesso():
-    req_data = request.get_json()
-    fasciaOraria = DBInterface.getFasciaOraria(req_data['nome_cliente'], req_data['nome_giostra'])
-    fasciaOrariaSplit = fasciaOraria.split('-')
-    print(fasciaOraria)
-    fasciaOrariaInizioData = datetime.strptime(fasciaOrariaSplit[0], "%H:%M")
-    fasciaOrariaFineData = datetime.strptime(fasciaOrariaSplit[1], "%H:%M")
-    now = datetime.strptime(datetime.now().time().strftime("%H:%M"), "%H:%M")
+    try:
+        req_data = request.get_json()
+        fasciaOraria = DBInterface.getFasciaOraria(req_data['nome_cliente'], req_data['nome_giostra'])
+        fasciaOrariaSplit = fasciaOraria.split('-')
+        print(fasciaOraria)
+        fasciaOrariaInizioData = datetime.strptime(fasciaOrariaSplit[0], "%H:%M")
+        fasciaOrariaFineData = datetime.strptime(fasciaOrariaSplit[1], "%H:%M")
+        now = datetime.strptime(datetime.now().time().strftime("%H:%M"), "%H:%M")
 
-    if(fasciaOrariaInizioData.time() <= now.time() and fasciaOrariaFineData.time() >= now.time()):
-        DBInterface.eliminaPrenotazione(req_data['nome_cliente'], req_data['nome_giostra'])
-        return jsonify(
-            status = 200
-        )
-    return "Fascia oraria non corretta", 412
+        if(fasciaOrariaInizioData.time() <= now.time() and fasciaOrariaFineData.time() >= now.time()):
+            DBInterface.eliminaPrenotazione(req_data['nome_cliente'], req_data['nome_giostra'])
+            return jsonify(
+                status = 200
+            )
+        return "Fascia oraria non corretta", 412
+    except:
+        return 'bad request', 400
 
 @server.route("/eliminaPrenotazione", methods=['POST'])
 def eliminaPrenotazione():
