@@ -13,6 +13,9 @@ import DBInterface
 import math
 #from threadNotifica import ThreadNotifica
 #from threadCliente import ThreadCliente
+import uuid
+#import time
+import collections
 from DAO.PrenotazioneDAO import PrenotazioneDAO
 from DAO.BigliettoDAO import BigliettoDAO
 from DAO.ClienteDAO import ClienteDAO
@@ -34,7 +37,7 @@ regex_username = r"^\w{6,20}$"
 regex_fascia_oraria = r"^\d\d:\d\d-\d\d:\d\d$"
 regex_data = r"^\d\d\/\d\d\/\d\d\d\d$"
 
-# TOKEN 
+# TOKEN
 TOKEN_DURATION = 600 #seconds
 Session = collections.namedtuple('Session', 'token expiration nickname')
 sessions = []
@@ -49,9 +52,8 @@ DBInterface.open_db()
 
 def verificaToken(token, nickname):
     for s in sessions:
-         if s.token == token and s.nickname == nickname and s.expiration > time.time():
+         if s.token == token and s.nickname == nickname: #and s.expiration > time.time():
             return True
- 
     return False
 
 
@@ -83,7 +85,7 @@ def registrati():
         return jsonify (
             status = 200
         )
-    except: 
+    except:
         return 'utente already exists', 403
 
 @server.route("/login", methods=['GET'])
@@ -103,67 +105,69 @@ def login():
     except:
         return 'bad request', 400
 
-    try :
-        utente = DBInterface.readUtente(username)
+#    try :
+    utente = DBInterface.readUtente(username)
         #crea sessione
-        if (password == utente.password):
-            session_token = str(uuid.uuid4())
-            exp_time = time.time() + TOKEN_DURATION
-            for s in sessions:
-            if s.nickname == username: #se esiste un'altra sessione la cancello e ne creo una nuova  
-                  sessions.remove(s)
-            new_session = Session(session_token, exp_time, username)
-            sessions.append(new_session)
-            return jsonify(
-                nickname = utente.nickname,
-                altezza = utente.altezza,
-                eta = utente.eta,
-                email = utente.email,
-                token = session_token,
-                expiration_time = exp_time
-            )
-        return 'utente unauthorized', 401
-    except:
-        return 'utente not found', 404
+    if (password == utente.password):
+        session_token = str(uuid.uuid4())
+        exp_time = 0 #time.time() + TOKEN_DURATION
+        for s in sessions:
+	      	if s.nickname == username: #se esiste un'altra sessione la cancello e ne creo una nuova
+        	    	sessions.remove(s)
+
+        new_session = Session(session_token, exp_time, username)
+        sessions.append(new_session)
+
+        return jsonify(
+            nickname = utente.nickname,
+            altezza = utente.altezza,
+            eta = utente.eta,
+            email = utente.email,
+            token = session_token,
+            expiration_time = exp_time
+        )
+    return 'utente unauthorized', 401
+#    except:
+#        return 'utente not found', 404
 
 @server.route("/accodati", methods=['POST'])
 def accodati():
-    try:
-        req_data = request.get_json()
-	m_fascia = re.search(regex_fascia_oraria, req_data['fascia_oraria'])
-	m_user = re.search(regex_username, req_data['nickname'])
+#    try:
+    req_data = request.get_json()
+    m_fascia = re.search(regex_fascia_oraria, req_data['fascia_oraria'])
+    m_user = re.search(regex_username, req_data['nickname'])
 
-	if m_fascia is None:
-		return 'Fascia oraria non valida (es 00:00-00:00)', 400
-	
-	if m_user is None:
-		return 'L\'username deve essere tra i 6 e i 20 caratteri di lunghezza e contenere solo caratteri alfanumerici e underscore', 400
-		
-	fascia = m_fascia.group(0)
-	username = m_user.group(0)
-        fasciaOrariaInizio = fascia.split('-')
-        fasciaOrariaInizioData = datetime.strptime(fasciaOrariaInizio[0], "%H:%M")
-        fasciaOrariaFineData = datetime.strptime(fasciaOrariaInizio[1], "%H:%M")
-        now = datetime.strptime(datetime.now().time().strftime("%H:%M"), "%H:%M")
+    if m_fascia is None:
+	return 'Fascia oraria non valida (es 00:00-00:00)', 400
 
-        if(fasciaOrariaInizioData.time()>ORACHIUSURA):
-            return 'La giostra  piena per oggi', 408
+    if m_user is None:
+	return 'L\'username deve essere tra i 6 e i 20 caratteri di lunghezza e contenere solo caratteri alfanumerici e underscore', 400
 
-        DBInterface.createPrenotazione(PrenotazioneDAO(fascia, req_data['numero_persone_da_accodare'], req_data['nome_giostra'], username))
-        tempoEliminazioneDallaCoda = fasciaOrariaFineData-now
+    fascia = m_fascia.group(0)
+    username = m_user.group(0)
+    fasciaOrariaInizio = fascia.split('-')
+    fasciaOrariaInizioData = datetime.strptime(fasciaOrariaInizio[0], "%H:%M")
+    fasciaOrariaFineData = datetime.strptime(fasciaOrariaInizio[1], "%H:%M")
+    now = datetime.strptime(datetime.now().time().strftime("%H:%M"), "%H:%M")
+
+    if(fasciaOrariaInizioData.time()>ORACHIUSURA):
+        return 'La giostra  piena per oggi', 408
+
+    DBInterface.createPrenotazione(PrenotazioneDAO(fascia, req_data['numero_persone_da_accodare'], req_data['nome_giostra'], username))
+    tempoEliminazioneDallaCoda = fasciaOrariaFineData-now
   #      ThreadCliente(req_data['nickname'],req_data['nome_giostra'], req_data['fascia_oraria'],tempoEliminazioneDallaCoda)
-        
-        tempoAttesa = fasciaOrariaInizioData-now
-        if (tempoAttesa >= timedelta(minutes=LIMITENOTIFICA)):
-            print("notifica tra: " + str(tempoAttesa-timedelta(minutes=TEMPONOTIFICA)))
-            tempoAttesa=(tempoAttesa-timedelta(minutes=TEMPONOTIFICA)).total_seconds()
+
+    tempoAttesa = fasciaOrariaInizioData-now
+    if (tempoAttesa >= timedelta(minutes=LIMITENOTIFICA)):
+        print("notifica tra: " + str(tempoAttesa-timedelta(minutes=TEMPONOTIFICA)))
+        tempoAttesa=(tempoAttesa-timedelta(minutes=TEMPONOTIFICA)).total_seconds()
  #           ThreadNotifica(req_data['token_cliente'], tempoAttesa ,req_data['nome_giostra'], req_data['nickname'], req_data['fascia_oraria'])
 
-        return jsonify(
-            status = 200
-        )
-    except:
-        return 'bad request', 400
+    return jsonify(
+        status = 200
+    )
+ #   except:
+  #      return 'bad request', 400
 
 @server.route("/getGiostre", methods=['GET'])
 def getGiostre():
@@ -188,7 +192,7 @@ def checkout():
 
 	if m_data is None:
 		return 'Formato data non valido (DD/MM/YYYY)', 400
-	
+
 	if m_user is None:
 		return 'L\'username deve essere tra i 6 e i 20 caratteri di lunghezza e contenere solo caratteri alfanumerici e underscore', 400
         data = m_data.group(0)
@@ -198,7 +202,7 @@ def checkout():
             return 'Biglietto duplicato', 406
 
 
-        lista_ospiti = []   
+        lista_ospiti = []
         ospitiJSON = []
         for ospite in req_data['cliente_ospiti']:
             lista_ospiti.append(OspiteDAO(ospite['nome'], ospite['eta'], ospite['altezza']))
@@ -214,7 +218,7 @@ def checkout():
             data = biglietto.data,
             ospiti = ospitiJSON
         )
-        
+
     except:
         return 'bad request', 400
 
@@ -231,7 +235,7 @@ def getFasciaOraria():
             ora_inizio = ora_inizio.strftime("%H:%M"),
             ora_fine = ora_fine.strftime("%H:%M")
         )
-        
+
     except:
         return 'bad request', 400
 
@@ -299,17 +303,16 @@ def registraAccesso():
 
 @server.route("/eliminaPrenotazione", methods=['POST'])
 def eliminaPrenotazione():
-    try:
-        if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
-            return 'utente unauthorized', 401
-        req_data = request.get_json()
-        DBInterface.eliminaPrenotazione(req_data['nome_cliente'], req_data['nome_giostra'])
-        return jsonify(
-            status = 200
-        )
-    except:
-        return "bad request", 400
+  #  try:
+    req_data = request.get_json()
+    if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
+	return 'utente unauthorized', 401
+    DBInterface.eliminaPrenotazione(req_data['nome_cliente'], req_data['nome_giostra'])
+    return jsonify(
+      	status = 200
+    )
+#    except:
+ #       return "bad request", 400
 
-    
 if __name__ == "__main__":
         server.run()
