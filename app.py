@@ -51,7 +51,7 @@ def registrati():
 	m_email = re.search(regex_email, req_data['email'])
 	m_pass = re.search(regex_pass, req_data['password'])
 	m_user = re.search(regex_username, req_data['nickname'])
-		
+
 	if m_email is None:
 		return 'Formato e-mail non valido', 400
 	if m_user is None:
@@ -73,19 +73,17 @@ def registrati():
 @server.route("/login", methods=['GET'])
 def login():
     try:
-        
-		
 	m_pass = re.search(regex_pass, unquote(request.args.get("password")).decode('utf-8'))
 	m_user = re.search(regex_username, request.args.get("username"))
-		
+
 	if m_user is None:
 		rise
 	if m_pass is None:
 		rise
-			
+
 	username = m_user.group(0)
-    password = m_pass.group(0)
-		
+	password = m_pass.group(0)
+
     except:
         return 'bad request', 400
 
