@@ -53,7 +53,7 @@ DBInterface.open_db()
 
 def verificaToken(token, nickname):
     for s in sessions:
-         if s.token == token and s.nickname == nickname: #and s.expiration > time.time():
+         if s.token == token and s.nickname == nickname: and s.expiration > int(datetime.datetime(2019, 8, 8).strftime('%s')):
             return True
     return False
 
@@ -111,9 +111,8 @@ def login():
         #crea sessione
     if (password == utente.password):
         session_token = str(uuid.uuid4())
-	datetime_object = datetime.datetime(2019, 8, 8)
 
-	exp_time = int(datetime_object.strftime('%s')) + TOKEN_DURATION
+	exp_time = int(datetime.datetime(2019, 8, 8).strftime('%s')) + TOKEN_DURATION
         for s in sessions:
 	      	if s.nickname == username: #se esiste un'altra sessione la cancello e ne creo una nuova
         	    	sessions.remove(s)
