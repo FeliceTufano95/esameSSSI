@@ -26,7 +26,8 @@ def readUtente(nickname):
 def createUtente(cliente):
     with app.app_context():
         try:
-            db.query_db('INSERT INTO Cliente VALUES("'+cliente.nickname+'","'+cliente.password+'","'+cliente.email+'",'+str(cliente.eta)+','+str(cliente.altezza)+')')
+            #db.query_db('INSERT INTO Cliente VALUES("'+cliente.nickname+'","'+cliente.password+'","'+cliente.email+'",'+str(cliente.eta)+','+str(cliente.altezza)+')')
+            db.query_db('INSERT INTO Cliente VALUES (?,?,?,?,?)',[cliente.nickname,cliente.password,cliente.email,str(cliente.eta),str(cliente.altezza)])
             return
         except:
             print('Inserimento fallito')
@@ -37,7 +38,7 @@ def createUtente(cliente):
     
 def readClientiInCoda(nomeGiostra):
     with app.app_context():
-        coda = db.query_db('SELECT * FROM Giostra WHERE Giostra.nome="'+nomeGiostra+'"', one=True)
+        coda = db.query_db('SELECT * FROM Giostra WHERE Giostra.nome=?',[nomeGiostra], one=True)
         return coda['numero_persone']
 
 # with app.app_context():
@@ -59,12 +60,12 @@ def readGiostre():
 
 def createBiglietto(data, ospiti, nickname):
     with app.app_context():
-        db.query_db('INSERT INTO Biglietto(data, Clientenickname) VALUES("'+data+'", "'+nickname+'")')
+        db.query_db('INSERT INTO Biglietto(data, Clientenickname) VALUES(?,?)',[data,nickname])
         biglietto = db.query_db('SELECT * FROM Biglietto WHERE last_insert_rowid()=Biglietto.ROWID', one=True)
 
         listaOspitiDAO = []
         for ospite in ospiti:
-            db.query_db('INSERT INTO Ospite(Bigliettocodice, nome, eta, altezza) VALUES('+str(biglietto['codice'])+',"'+ospite.nome+'",'+str(ospite.eta)+','+str(ospite.altezza)+')')
+            db.query_db('INSERT INTO Ospite(Bigliettocodice, nome, eta, altezza) VALUES(?,?,?,?)',[str(biglietto['codice']),ospite.nome,str(ospite.eta),str(ospite.altezza)])
             listaOspitiDAO.append(OspiteDAO(ospite.nome, ospite.eta, ospite.altezza))
         
         bigliettoDAO = BigliettoDAO(biglietto['codice'], biglietto['data'], listaOspitiDAO)
@@ -79,9 +80,9 @@ def createBiglietto(data, ospiti, nickname):
 def createPrenotazione(prenotazione):
     with app.app_context():
         try:
-            db.query_db('INSERT INTO Prenotazione VALUES("'+prenotazione.nome_cliente+'","'+prenotazione.nome_giostra+'","'+prenotazione.fascia_oraria+'",'+str(prenotazione.numero_ospiti)+')')
+            db.query_db('INSERT INTO Prenotazione VALUES(?,?,?,?)',[prenotazione.nome_cliente,prenotazione.nome_giostra,prenotazione.fascia_oraria,str(prenotazione.numero_ospiti)])
             numero_persone_in_coda = readClientiInCoda(prenotazione.nome_giostra)+prenotazione.numero_ospiti+1
-            db.query_db('UPDATE Giostra SET numero_persone='+str(numero_persone_in_coda)+' WHERE Giostra.nome="'+prenotazione.nome_giostra+'"')
+            db.query_db('UPDATE Giostra SET numero_persone=? WHERE Giostra.nome=?',[str(numero_persone_in_coda),prenotazione.nome_giostra])
         except:
             raise
 
@@ -90,7 +91,7 @@ def createPrenotazione(prenotazione):
         
 def getGiostra(nomeGiostra):
     with app.app_context():
-        giostra_query = db.query_db('SELECT * FROM Giostra WHERE Giostra.nome = \''+nomeGiostra+'\'',one = True)
+        giostra_query = db.query_db('SELECT * FROM Giostra WHERE Giostra.nome =?', [nomeGiostra],one = True)
         giostra = GiostraDAO(giostra_query['nome'],giostra_query['capienza'],giostra_query['durata'],
         giostra_query['limite_eta'],giostra_query['limite_altezza'],giostra_query['descrizione'],giostra_query['stato_funzionamento'], giostra_query['numero_persone'])
         return giostra
@@ -101,7 +102,7 @@ def getGiostra(nomeGiostra):
 
 def getPrenotazioni(nomeCliente):
     with app.app_context():
-        prenotazioni = db.query_db('SELECT * FROM Prenotazione WHERE Prenotazione.Clientenickname="'+nomeCliente+'"')
+        prenotazioni = db.query_db('SELECT * FROM Prenotazione WHERE Prenotazione.Clientenickname=?',[nomeCliente])
         listaPrenotazioniDAO = []
         for prenotazione in prenotazioni:
             listaPrenotazioniDAO.append(PrenotazioneDAO(prenotazione['fascia_oraria'], prenotazione['numero_ospiti'], prenotazione['Giostranome'], prenotazione['Clientenickname']))
@@ -119,7 +120,7 @@ def getPrenotazioni(nomeCliente):
 
 def checkPrenotazione(nomeCliente, nomeGiostra, fasciaOraria):
     with app.app_context():
-        prenotazione = db.query_db('SELECT * FROM Prenotazione WHERE Prenotazione.Clientenickname="'+nomeCliente+'" AND Prenotazione.Giostranome="'+nomeGiostra+'" AND Prenotazione.fascia_oraria="'+fasciaOraria+'"',one=True)
+        prenotazione = db.query_db('SELECT * FROM Prenotazione WHERE Prenotazione.Clientenickname=? AND Prenotazione.Giostranome=? AND Prenotazione.fascia_oraria=?',[nomeCliente, nomeGiostra, fasciaOraria],one=True)
 
         if prenotazione != None:
             return True
@@ -132,18 +133,18 @@ def checkPrenotazione(nomeCliente, nomeGiostra, fasciaOraria):
 
 def eliminaPrenotazione(nomeCliente, nomeGiostra):
     with app.app_context():
-        numero_persone = db.query_db('SELECT numero_ospiti FROM Prenotazione WHERE Prenotazione.Clientenickname= "'+nomeCliente+'" AND Prenotazione.Giostranome="'+nomeGiostra+'"',one=True)
+        numero_persone = db.query_db('SELECT numero_ospiti FROM Prenotazione WHERE Prenotazione.Clientenickname= ? AND Prenotazione.Giostranome=?',[nomeCliente, nomeGiostra],one=True)
         numero_persone_coda = db.query_db('SELECT numero_persone FROM Giostra WHERE Giostra.nome=\''+nomeGiostra+'\'', one=True)
         persone = numero_persone_coda['numero_persone']-numero_persone['numero_ospiti']-1
-        db.query_db('UPDATE Giostra SET numero_persone=\''+str(persone)+'\' WHERE Giostra.nome=\''+nomeGiostra+'\'')
-        db.query_db('DELETE FROM Prenotazione WHERE Prenotazione.Clientenickname= "'+nomeCliente+'" AND Prenotazione.Giostranome="'+nomeGiostra+'"')
+        db.query_db('UPDATE Giostra SET numero_persone=? WHERE Giostra.nome=?',[str(persone),nomeGiostra])
+        db.query_db('DELETE FROM Prenotazione WHERE Prenotazione.Clientenickname=? AND Prenotazione.Giostranome=?',[nomeCliente,nomeGiostra])
 
 # with app.app_context():
 #     eliminaPrenotazione("Test", "Carosello")
 
 def getFasciaOraria(nomeCliente, nomeGiostra):
     with app.app_context():
-        fascia_oraria = db.query_db('SELECT fascia_oraria FROM Prenotazione WHERE Prenotazione.Clientenickname= "'+nomeCliente+'" AND Prenotazione.Giostranome="'+nomeGiostra+'"',one=True)
+        fascia_oraria = db.query_db('SELECT fascia_oraria FROM Prenotazione WHERE Prenotazione.Clientenickname=? AND Prenotazione.Giostranome=?',[nomeCliente, nomeGiostra],one=True)
         return fascia_oraria['fascia_oraria']
 
 # with app.app_context():
@@ -173,7 +174,7 @@ def getBiglietto(nomeCliente, data):
 
 def isBigliettoDup(nomeCliente, data):
     with app.app_context():
-        biglietto = db.query_db('SELECT * FROM Cliente JOIN Biglietto ON Cliente.nickname=Biglietto.Clientenickname WHERE Cliente.nickname=\''+nomeCliente+'\' AND Biglietto.data=\''+data+'\'', one=True)
+        biglietto = db.query_db('SELECT * FROM Cliente JOIN Biglietto ON Cliente.nickname=Biglietto.Clientenickname WHERE Cliente.nickname=? AND Biglietto.data=?',[nomeCliente, data], one=True)
         if (biglietto != None):
             return True
         return False
