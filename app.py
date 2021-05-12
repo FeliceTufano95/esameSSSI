@@ -154,13 +154,13 @@ def accodati():
         return 'La giostra  piena per oggi', 408
 
     DBInterface.createPrenotazione(PrenotazioneDAO(fascia, req_data['numero_persone_da_accodare'], req_data['nome_giostra'], username))
-    tempoEliminazioneDallaCoda = fasciaOrariaFineData-now
+ #   tempoEliminazioneDallaCoda = fasciaOrariaFineData-now
   #      ThreadCliente(req_data['nickname'],req_data['nome_giostra'], req_data['fascia_oraria'],tempoEliminazioneDallaCoda)
 
-    tempoAttesa = fasciaOrariaInizioData-now
-    if (tempoAttesa >= timedelta(minutes=LIMITENOTIFICA)):
-        print("notifica tra: " + str(tempoAttesa-timedelta(minutes=TEMPONOTIFICA)))
-        tempoAttesa=(tempoAttesa-timedelta(minutes=TEMPONOTIFICA)).total_seconds()
+ #   tempoAttesa = fasciaOrariaInizioData-now
+  #  if (tempoAttesa >= timedelta(minutes=LIMITENOTIFICA)):
+ #       print("notifica tra: " + str(tempoAttesa-timedelta(minutes=TEMPONOTIFICA)))
+ #       tempoAttesa=(tempoAttesa-timedelta(minutes=TEMPONOTIFICA)).total_seconds()
  #           ThreadNotifica(req_data['token_cliente'], tempoAttesa ,req_data['nome_giostra'], req_data['nickname'], req_data['fascia_oraria'])
 
     return jsonify(
