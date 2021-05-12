@@ -59,7 +59,7 @@ def registrati():
 	if m_pass is None:
 		return 'La password deve contenere almeno un carattere minuscolo, uno maiuscolo, un numero e un simbolo e deve essere tra 8 e 15 caratteri di lunghezza', 400
 
-		utenteDAO = ClienteDAO(m_user.group(0), m_email.group(0),  m_pass.group(0), req_data['eta'], req_data['altezza'], None)
+	utenteDAO = ClienteDAO(m_user.group(0), m_email.group(0),  m_pass.group(0), req_data['eta'], req_data['altezza'], None)
     except:
         return 'bad request', 400
     try:
