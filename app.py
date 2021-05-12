@@ -48,17 +48,16 @@ def home():
 def registrati():
     try:
         req_data = request.get_json()
-        
-		m_email = re.search(regex_email, req_data['email'])
-		m_pass = re.search(regex_pass, req_data['password'])
-		m_user = re.search(regex_username, req_data['nickname'])
+	m_email = re.search(regex_email, req_data['email'])
+	m_pass = re.search(regex_pass, req_data['password'])
+	m_user = re.search(regex_username, req_data['nickname'])
 		
-		if m_email is None:
-			return 'Formato e-mail non valido', 400
-		if m_user is None:
-			return 'L\'username deve essere tra i 6 e i 20 caratteri di lunghezza e contenere solo caratteri alfanumerici e underscore', 400
-		if m_pass is None:
-			return 'La password deve contenere almeno un carattere minuscolo, uno maiuscolo, un numero e un simbolo e deve essere tra 8 e 15 caratteri di lunghezza', 400
+	if m_email is None:
+		return 'Formato e-mail non valido', 400
+	if m_user is None:
+		return 'L\'username deve essere tra i 6 e i 20 caratteri di lunghezza e contenere solo caratteri alfanumerici e underscore', 400
+	if m_pass is None:
+		return 'La password deve contenere almeno un carattere minuscolo, uno maiuscolo, un numero e un simbolo e deve essere tra 8 e 15 caratteri di lunghezza', 400
 
 		utenteDAO = ClienteDAO(m_user.group(0), m_email.group(0),  m_pass.group(0), req_data['eta'], req_data['altezza'], None)
     except:
