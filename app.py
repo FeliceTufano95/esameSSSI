@@ -34,6 +34,11 @@ regex_username = r"^\w{6,20}$"
 regex_fascia_oraria = r"^\d\d:\d\d-\d\d:\d\d$"
 regex_data = r"^\d\d\/\d\d\/\d\d\d\d$"
 
+# TOKEN 
+TOKEN_DURATION = 600 #seconds
+Session = collections.namedtuple('Session', 'token expiration nickname')
+sessions = []
+
 server = Flask(__name__)
 print(sys.version)
 
@@ -41,6 +46,15 @@ print(sys.version)
 #    cred = credentials.Certificate('./serverKey/serverkey.json')
 #    default_app = firebase_admin.initialize_app(cred)
 DBInterface.open_db()
+
+def verificaToken(token, nickname):
+    for s in sessions:
+         if s.token == token and s.nickname == nickname and s.expiration > time.time():
+            return True
+ 
+    return False
+
+
 
 @server.route("/")
 def home():
@@ -91,13 +105,22 @@ def login():
 
     try :
         utente = DBInterface.readUtente(username)
+        #crea sessione
         if (password == utente.password):
+            session_token = str(uuid.uuid4())
+            exp_time = time.time() + TOKEN_DURATION
+            for s in sessions:
+            if s.nickname == username: #se esiste un'altra sessione la cancello e ne creo una nuova  
+                  sessions.remove(s)
+            new_session = Session(session_token, exp_time, username)
+            sessions.append(new_session)
             return jsonify(
                 nickname = utente.nickname,
-                password = utente.password,
                 altezza = utente.altezza,
                 eta = utente.eta,
-                email = utente.email
+                email = utente.email,
+                token = session_token,
+                expiration_time = exp_time
             )
         return 'utente unauthorized', 401
     except:
@@ -277,6 +300,8 @@ def registraAccesso():
 @server.route("/eliminaPrenotazione", methods=['POST'])
 def eliminaPrenotazione():
     try:
+        if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
+            return 'utente unauthorized', 401
         req_data = request.get_json()
         DBInterface.eliminaPrenotazione(req_data['nome_cliente'], req_data['nome_giostra'])
         return jsonify(
