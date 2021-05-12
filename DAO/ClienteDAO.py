@@ -1,5 +1,7 @@
 class ClienteDAO:
 
+
+
     def __init__(self,nickname, email, password, eta, altezza, biglietto):
         self.nickname = nickname 
         self.email = email
