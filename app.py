@@ -21,11 +21,16 @@ from DAO.GiostraDAO import GiostraDAO
 from urllib import unquote
 from datetime import time
 import re
-#prova
+
 ORACHIUSURA = time(hour=21,minute=00)
 LIMITENOTIFICA = 15
 TEMPONOTIFICA = 10
 TEMPOFASCIA = 15
+
+# REGEX
+regex_email = r"^[\w.]+@[\w.]+\.\w+$"
+regex_pass = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,15}$"
+regex_username = r"^\w{6,20}$"
 
 server = Flask(__name__)
 print(sys.version)
@@ -37,15 +42,12 @@ DBInterface.open_db()
 
 @server.route("/")
 def home():
-    return "Server onlinePROVA"
+    return "Server online"
 
 @server.route("/registrati", methods=['POST'])
 def registrati():
     try:
         req_data = request.get_json()
-        regex_email = r"^[\w.]+@[\w.]+\.\w+$"
-		regex_pass = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,15}$"
-		regex_username = r"^\w{6,20}$"
         
 		m_email = re.search(regex_email, req_data['email'])
 		m_pass = re.search(regex_pass, req_data['password'])
