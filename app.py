@@ -92,9 +92,9 @@ def registrati():
 @server.route("/login", methods=['POST'])
 def login():
     try:
-    	req_data = request.get_json()
-	m_pass = re.search(regex_pass, req_data['password'])
-	m_user = re.search(regex_username, req_data['username'])
+        req_data = request.get_json()
+        m_pass = re.search(regex_pass, req_data['password'])
+        m_user = re.search(regex_username, req_data['username'])
 
 	if m_user is None:
 		rise
@@ -107,65 +107,64 @@ def login():
     except:
         return 'bad request', 400
 
-#    try :
-    utente = DBInterface.readUtente(username)
+    try :
+        utente = DBInterface.readUtente(username)
         #crea sessione
-        
-    if (hashlib.sha256(password).hexdigest() == utente.password):
-        session_token = str(uuid.uuid4())
+	if (hashlib.sha256(password).hexdigest() == utente.password):
+       	    session_token = str(uuid.uuid4())
 
 	exp_time = t.time() + TOKEN_DURATION
         for s in sessions:
-	      	if s.nickname == username: #se esiste un'altra sessione la cancello e ne creo una nuova
-        	    	sessions.remove(s)
+	    if s.nickname == username: #se esiste un'altra sessione la cancello e ne creo una nuova
+                sessions.remove(s)
 
         new_session = Session(session_token, exp_time, username)
-        sessions.append(new_session)
+	sessions.append(new_session)
 
         return jsonify(
-            nickname = utente.nickname,
-            altezza = utente.altezza,
+	    nickname = utente.nickname,
+	    altezza = utente.altezza,
             eta = utente.eta,
-            email = utente.email,
-            token = session_token,
+	    email = utente.email,
+	    token = session_token,
             expiration_time = exp_time
-        )
-    return 'utente unauthorized', 401
-#    except:
-#        return 'utente not found', 404
+	)
+	return 'utente unauthorized', 401
+    except:
+        return 'utente not found', 404
 
 @server.route("/accodati", methods=['POST'])
 def accodati():
-#    try:
-    req_data = request.get_json()
-    if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
-        return 'utente unauthorized', 401
-    m_fascia = re.search(regex_fascia_oraria, req_data['fascia_oraria'])
-    m_user = re.search(regex_username, req_data['nome_cliente'])
+	try:
+	    req_data = request.get_json()
+	    if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
+	        return 'utente unauthorized', 401
+	    m_fascia = re.search(regex_fascia_oraria, req_data['fascia_oraria'])
+	    m_user = re.search(regex_username, req_data['nome_cliente'])
 
-    if m_fascia is None:
-	return 'Fascia oraria non valida (es 00:00-00:00)', 400
+	    if m_fascia is None:
+		return 'Fascia oraria non valida (es 00:00-00:00)', 400
 
-    if m_user is None:
-	return 'L\'username deve essere tra i 6 e i 20 caratteri di lunghezza e contenere solo caratteri alfanumerici e underscore', 400
+	    if m_user is None:
+		return 'L\'username deve essere tra i 6 e i 20 caratteri di lunghezza e contenere solo caratteri alfanumerici e underscore', 400
 
-    fascia = m_fascia.group(0)
-    username = m_user.group(0)
-    fasciaOrariaInizio = fascia.split('-')
-    fasciaOrariaInizioData = datetime.strptime(fasciaOrariaInizio[0], "%H:%M")
-    fasciaOrariaFineData = datetime.strptime(fasciaOrariaInizio[1], "%H:%M")
-    now = datetime.strptime(datetime.now().time().strftime("%H:%M"), "%H:%M")
+	    fascia = m_fascia.group(0)
+	    username = m_user.group(0)
+	    fasciaOrariaInizio = fascia.split('-')
+	    fasciaOrariaInizioData = datetime.strptime(fasciaOrariaInizio[0], "%H:%M")
+	    fasciaOrariaFineData = datetime.strptime(fasciaOrariaInizio[1], "%H:%M")
+	    now = datetime.strptime(datetime.now().time().strftime("%H:%M"), "%H:%M")
 
-    if(fasciaOrariaInizioData.time()>ORACHIUSURA):
-        return 'La giostra  piena per oggi', 408
+	    if(fasciaOrariaInizioData.time()>ORACHIUSURA):
+	        return 'La giostra  piena per oggi', 408
 
-    DBInterface.createPrenotazione(PrenotazioneDAO(fascia, req_data['numero_persone_da_accodare'], req_data['nome_giostra'], username))
+	    DBInterface.createPrenotazione(PrenotazioneDAO(fascia, req_data['numero_persone_da_accodare'], req_data['nome_giostra'], username))
 
-    return jsonify(
-        status = 200
-    )
- #   except:
-  #      return 'bad request', 400
+	    return jsonify(
+        	status = 200
+	    )
+	except:
+	    return 'bad request', 400
 
 @server.route("/getGiostre", methods=['GET'])
 def getGiostre():
@@ -224,22 +223,22 @@ def checkout():
 
 @server.route("/getFasciaOraria", methods=['GET'])
 def getFasciaOraria():
-#    try:
-    if verificaToken(request.args.get('token'), request.args.get('nome_cliente')) == False:
-        return 'utente unauthorized', 401
-    nome_giostra = request.args.get('nome_giostra')
-    numero_clienti = DBInterface.readClientiInCoda(nome_giostra)
-    giostra = DBInterface.getGiostra(nome_giostra)
-    minuti_attesa = math.floor(numero_clienti/(giostra.capienza/giostra.durata))
-    ora_inizio = datetime.now()+timedelta(minutes=minuti_attesa)
-    ora_fine = ora_inizio+timedelta(minutes=TEMPOFASCIA)
-    return jsonify(
-        ora_inizio = ora_inizio.strftime("%H:%M"),
-        ora_fine = ora_fine.strftime("%H:%M")
-    )
+    try:
+        if verificaToken(request.args.get('token'), request.args.get('nome_cliente')) == False:
+            return 'utente unauthorized', 401
+        nome_giostra = request.args.get('nome_giostra')
+        numero_clienti = DBInterface.readClientiInCoda(nome_giostra)
+        giostra = DBInterface.getGiostra(nome_giostra)
+        minuti_attesa = math.floor(numero_clienti/(giostra.capienza/giostra.durata))
+        ora_inizio = datetime.now()+timedelta(minutes=minuti_attesa)
+        ora_fine = ora_inizio+timedelta(minutes=TEMPOFASCIA)
+        return jsonify(
+            ora_inizio = ora_inizio.strftime("%H:%M"),
+            ora_fine = ora_fine.strftime("%H:%M")
+        )
 
- #   except:
-  #      return 'bad request', 400
+    except:
+       return 'bad request', 400
 
 @server.route("/getPrenotazioni", methods=['GET'])
 def getPrenotazioni():
@@ -311,16 +310,16 @@ def registraAccesso():
 
 @server.route("/eliminaPrenotazione", methods=['POST'])
 def eliminaPrenotazione():
-  #  try:
-    req_data = request.get_json()
-    if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
-	return 'utente unauthorized', 401
-    DBInterface.eliminaPrenotazione(req_data['nome_cliente'], req_data['nome_giostra'])
-    return jsonify(
-      	status = 200
-    )
-#    except:
- #       return "bad request", 400
+    try:
+        req_data = request.get_json()
+        if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
+            return 'utente unauthorized', 401
+        DBInterface.eliminaPrenotazione(req_data['nome_cliente'], req_data['nome_giostra'])
+        return jsonify(
+            status = 200
+       )
+    except:
+        return "bad request", 400
 
 if __name__ == "__main__":
         server.run()
