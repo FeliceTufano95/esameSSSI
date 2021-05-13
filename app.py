@@ -47,9 +47,6 @@ sessions = []
 server = Flask(__name__)
 print(sys.version)
 
-#if not firebase_admin._apps:
-#    cred = credentials.Certificate('./serverKey/serverkey.json')
-#    default_app = firebase_admin.initialize_app(cred)
 DBInterface.open_db()
 
 def verificaToken(token, nickname):
@@ -90,11 +87,12 @@ def registrati():
     except:
         return 'utente already exists', 403
 
-@server.route("/login", methods=['GET'])
+@server.route("/login", methods=['POST'])
 def login():
     try:
-	m_pass = re.search(regex_pass, unquote(request.args.get("password")).decode('utf-8'))
-	m_user = re.search(regex_username, request.args.get("username"))
+    req_data = request.get_json()
+	m_pass = re.search(regex_pass, req_data['password'])
+	m_user = re.search(regex_username, req_data['username'])
 
 	if m_user is None:
 		rise
@@ -137,6 +135,8 @@ def login():
 def accodati():
 #    try:
     req_data = request.get_json()
+    if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
+        return 'utente unauthorized', 401
     m_fascia = re.search(regex_fascia_oraria, req_data['fascia_oraria'])
     m_user = re.search(regex_username, req_data['nickname'])
 
@@ -157,14 +157,6 @@ def accodati():
         return 'La giostra  piena per oggi', 408
 
     DBInterface.createPrenotazione(PrenotazioneDAO(fascia, req_data['numero_persone_da_accodare'], req_data['nome_giostra'], username))
- #   tempoEliminazioneDallaCoda = fasciaOrariaFineData-now
-  #      ThreadCliente(req_data['nickname'],req_data['nome_giostra'], req_data['fascia_oraria'],tempoEliminazioneDallaCoda)
-
- #   tempoAttesa = fasciaOrariaInizioData-now
-  #  if (tempoAttesa >= timedelta(minutes=LIMITENOTIFICA)):
- #       print("notifica tra: " + str(tempoAttesa-timedelta(minutes=TEMPONOTIFICA)))
- #       tempoAttesa=(tempoAttesa-timedelta(minutes=TEMPONOTIFICA)).total_seconds()
- #           ThreadNotifica(req_data['token_cliente'], tempoAttesa ,req_data['nome_giostra'], req_data['nickname'], req_data['fascia_oraria'])
 
     return jsonify(
         status = 200
@@ -190,6 +182,8 @@ def getGiostre():
 def checkout():
     try:
         req_data = request.get_json()
+        if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
+            return 'utente unauthorized', 401
 	m_data = re.search(regex_data, req_data['cliente_data'])
 	m_user = re.search(regex_username, req_data['cliente_nickname'])
 
@@ -228,6 +222,8 @@ def checkout():
 @server.route("/getFasciaOraria", methods=['GET'])
 def getFasciaOraria():
 #    try:
+    if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
+        return 'utente unauthorized', 401
     nome_giostra = request.args.get('nome_giostra')
     numero_clienti = DBInterface.readClientiInCoda(nome_giostra)
     giostra = DBInterface.getGiostra(nome_giostra)
@@ -246,6 +242,8 @@ def getFasciaOraria():
 def getPrenotazioni():
     try:
         nome_cliente = request.args.get('nome_cliente')
+        if verificaToken(request.args.get("token"),nome_cliente) == False:
+            return 'utente unauthorized', 401
         giostre = DBInterface.getPrenotazioni(nome_cliente)
         lista_giostreJSON = []
         lista_clienti_coda = []
@@ -266,6 +264,8 @@ def getPrenotazioni():
 def getBiglietto():
     try:
         nome_cliente = request.args.get("nome_cliente")
+        if verificaToken(request.args.get("token"),nome_cliente) == False:
+            return 'utente unauthorized', 401
         data = datetime.today()
         dataString = datetime.strftime(data, "%d/%m/%Y")
         bigliettoDAO = DBInterface.getBiglietto(nome_cliente, str(dataString))
@@ -288,6 +288,8 @@ def getBiglietto():
 def registraAccesso():
     try:
         req_data = request.get_json()
+        if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
+            return 'utente unauthorized', 401
         fasciaOraria = DBInterface.getFasciaOraria(req_data['nome_cliente'], req_data['nome_giostra'])
         fasciaOrariaSplit = fasciaOraria.split('-')
         print(fasciaOraria)
