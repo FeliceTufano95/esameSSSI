@@ -138,7 +138,7 @@ def accodati():
     if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
         return 'utente unauthorized', 401
     m_fascia = re.search(regex_fascia_oraria, req_data['fascia_oraria'])
-    m_user = re.search(regex_username, req_data['nickname'])
+    m_user = re.search(regex_username, req_data['nome_cliente'])
 
     if m_fascia is None:
 	return 'Fascia oraria non valida (es 00:00-00:00)', 400
