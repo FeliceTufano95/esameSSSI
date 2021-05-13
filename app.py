@@ -185,7 +185,7 @@ def checkout():
         if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
             return 'utente unauthorized', 401
 	m_data = re.search(regex_data, req_data['cliente_data'])
-	m_user = re.search(regex_username, req_data['cliente_nickname'])
+	m_user = re.search(regex_username, req_data['nome_cliente'])
 
 	if m_data is None:
 		return 'Formato data non valido (DD/MM/YYYY)', 400
