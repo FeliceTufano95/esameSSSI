@@ -1,4 +1,5 @@
 import DB
+import hashlib
 from flask import Flask, request, jsonify
 import json
 #from firebase_admin import messaging
@@ -76,7 +77,8 @@ def registrati():
 	if m_pass is None:
 		return 'La password deve contenere almeno un carattere minuscolo, uno maiuscolo, un numero e un simbolo e deve essere tra 8 e 15 caratteri di lunghezza', 400
 
-	utenteDAO = ClienteDAO(m_user.group(0), m_email.group(0),  m_pass.group(0), req_data['eta'], req_data['altezza'], None)
+	h = hashlib.sha256(m_pass.group(0))
+    utenteDAO = ClienteDAO(m_user.group(0), m_email.group(0),  h.hexdigest(), req_data['eta'], req_data['altezza'], None)
     except:
         return 'bad request', 400
     try:
@@ -108,7 +110,8 @@ def login():
 #    try :
     utente = DBInterface.readUtente(username)
         #crea sessione
-    if (password == utente.password):
+        
+    if (hashlib.sha256(password).hexdigest() == utente.password):
         session_token = str(uuid.uuid4())
 
 	exp_time = t.time() + TOKEN_DURATION
