@@ -222,7 +222,7 @@ def checkout():
 @server.route("/getFasciaOraria", methods=['GET'])
 def getFasciaOraria():
 #    try:
-    if verificaToken(req_data['token'], req_data['nome_cliente']) == False:
+    if verificaToken(request.args.get('token'), request.args.get('nome_cliente')) == False:
         return 'utente unauthorized', 401
     nome_giostra = request.args.get('nome_giostra')
     numero_clienti = DBInterface.readClientiInCoda(nome_giostra)
