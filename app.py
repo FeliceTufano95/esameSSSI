@@ -90,7 +90,7 @@ def registrati():
 @server.route("/login", methods=['POST'])
 def login():
     try:
-    req_data = request.get_json()
+    	req_data = request.get_json()
 	m_pass = re.search(regex_pass, req_data['password'])
 	m_user = re.search(regex_username, req_data['username'])
 
