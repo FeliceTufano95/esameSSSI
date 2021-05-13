@@ -322,4 +322,5 @@ def eliminaPrenotazione():
         return "bad request", 400
 
 if __name__ == "__main__":
+#        server.run(ssl_context=('cert.pem', 'key.pem'))
         server.run()
