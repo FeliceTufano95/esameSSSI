@@ -97,9 +97,9 @@ def login():
         m_user = re.search(regex_username, req_data['username'])
 
 	if m_user is None:
-		rise
+		raise
 	if m_pass is None:
-		rise
+		raise
 
 	username = m_user.group(0)
 	password = m_pass.group(0)
